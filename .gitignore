@@ -1,0 +1,34 @@
+# --- Swift / SPM ---
+.build/
+.swiftpm/
+Package.resolved
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# --- our build output ---
+build/
+*.app
+*.dmg
+
+# --- bundled third-party binaries ---
+# vc_redist.x86.exe / vc_redist.x64.exe — fetched by Prereqs/fetch.sh from
+# Microsoft. ~40 MB combined; don't commit binary blobs.
+Prereqs/*.exe
+Prereqs/*.msi
+
+# Wine runtime is built/staged outside this repo (see README) — never commit
+# even if it accidentally lands here.
+SharedSupport/
+
+# --- macOS / IDE noise ---
+.DS_Store
+*.swp
+*.bak
+.idea/
+.vscode/
+
+# --- logs from local dev runs ---
+*.log
+
+# session-internal notes
+HANDOVER.md
