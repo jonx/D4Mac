@@ -1,7 +1,7 @@
 # D4Mac (private)
 
 Free Battle.net launcher for Apple Silicon Macs. Closed source. Free download.
-Monetised via paid skin DLC sold from `d4mac.app`.
+Monetised via paid skin DLC sold from `d4mac.com`.
 
 The compiled `.app` is **free to distribute** — Apple's GPTK
 non-commercial-redistribution clause permits free downloads. Selling the
@@ -48,7 +48,7 @@ For production deploy, set the same vars on Vercel.
 
 ## How activation works
 
-1. User clicks a locked skin in the .app → opens `d4mac.app/api/checkout?sku=…`
+1. User clicks a locked skin in the .app → opens `d4mac.com/api/checkout?sku=…`
 2. Server creates a Stripe Checkout Session, 303s the browser to it
 3. User pays with card; Stripe redirects to `/activate?session_id=…`
 4. Activate page reads session, merges entitlements into the Stripe Customer's

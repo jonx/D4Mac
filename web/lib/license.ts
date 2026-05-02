@@ -20,7 +20,7 @@ export async function signLicense(params: {
   const key = await getPrivateKey();
   return await new SignJWT({ entitlements: params.entitlements })
     .setProtectedHeader({ alg: "EdDSA" })
-    .setIssuer("d4mac.app")
+    .setIssuer("d4mac.com")
     .setAudience("d4mac-client")
     .setSubject(params.customerId)
     .setJti(params.sessionId)

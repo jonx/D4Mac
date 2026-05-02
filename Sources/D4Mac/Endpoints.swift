@@ -1,9 +1,14 @@
 import Foundation
 
 enum Endpoints {
-    /// Base URL for the storefront. Switch to `https://d4mac.app` once the
-    /// production domain is registered and the site is deployed.
+    /// Base URL for the storefront. Debug builds (default `swift build`) use
+    /// localhost; release builds (`swift build -c release` via `build.sh`)
+    /// use the production domain.
+#if DEBUG
     static let baseURL = URL(string: "http://localhost:3000")!
+#else
+    static let baseURL = URL(string: "https://d4mac.com")!
+#endif
 
     /// Public skin shop landing page, listing all paid SKUs with previews.
     static let skinsPageURL = baseURL.appending(path: "skins")

@@ -45,7 +45,7 @@ enum LicenseVerifier {
 
         let payload = try JSONDecoder().decode(LicensePayload.self, from: payloadJSON)
 
-        guard payload.iss == "d4mac.app",
+        guard payload.iss == "d4mac.com",
               payload.aud == "d4mac-client"
         else { throw LicenseError.badClaims }
 

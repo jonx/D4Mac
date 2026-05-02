@@ -252,7 +252,7 @@ struct ContentView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(themes.current.accent)
-                .help("Browse all skins on d4mac.app")
+                .help("Browse all skins on d4mac.com")
             }
             HStack(spacing: 12) {
                 ForEach(themes.available, id: \.id) { theme in
