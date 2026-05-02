@@ -4,9 +4,15 @@ import PackageDescription
 let package = Package(
     name: "D4Mac",
     platforms: [.macOS(.v14)],
+    dependencies: [
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.7.0"),
+    ],
     targets: [
         .executableTarget(
             name: "D4Mac",
+            dependencies: [
+                .product(name: "Sparkle", package: "Sparkle"),
+            ],
             path: "Sources/D4Mac"
         )
     ]

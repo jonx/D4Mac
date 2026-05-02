@@ -28,11 +28,11 @@ final class BottleManager: ObservableObject {
         var label: String {
             switch self {
             case .idle: ""
-            case .preparingPrefix:    "Setting up your bottle…"
-            case .installingFonts:    "Installing Windows fonts…"
-            case .installingPrereqs:  "Installing Windows prerequisites…"
-            case .runningInstaller:   "Installer is running"
-            case .launchingBattleNet: "Battle.net is running"
+            case .preparingPrefix:    "Pouring a fresh bottle…"
+            case .installingFonts:    "Teaching it to speak Windows…"
+            case .installingPrereqs:  "Stoking the engine…"
+            case .runningInstaller:   "Battle.net's moving in"
+            case .launchingBattleNet: "Battle.net is live"
             }
         }
 
@@ -41,13 +41,13 @@ final class BottleManager: ObservableObject {
             switch self {
             case .idle: ""
             case .preparingPrefix:
-                "Initialising Wine and copying graphics drivers. Takes ~30 s on first run."
+                "Wiring up Wine and slipping in the graphics drivers. ~30 s on the first pour."
             case .installingFonts:
-                "Copying Arial / Times / Verdana + Source Han Sans (CJK) into the Wine prefix so Windows apps render text correctly."
+                "A little behind-the-scenes prep so the menus look the way they should."
             case .installingPrereqs:
-                "Installing Microsoft VC++ runtime so Battle.net's UI can start. Takes ~1 min on first run."
+                "Cranking up everything Battle.net needs to open. ~1 min on the first run."
             case .runningInstaller:
-                "Look for the Battle.net installer window. Click through its prompts to finish — D4Mac will pick up automatically when it's done."
+                "Look for the installer window — click through its prompts and D4Mac will take over once it's home."
             case .launchingBattleNet:
                 "Battle.net opened in its own window. Log in there and pick a game to play."
             }

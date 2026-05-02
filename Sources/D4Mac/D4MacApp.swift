@@ -1,35 +1,34 @@
 import SwiftUI
+import Sparkle
 
 @main
 struct D4MacApp: App {
     @StateObject private var bottle = BottleManager()
-    @State private var entitlements: EntitlementStore
-    @State private var themes: ThemeStore
-    @State private var activationStatus: ActivationStatus = .idle
+    private let updaterController: SPUStandardUpdaterController
 
     init() {
-        let entitlements = EntitlementStore()
-        _entitlements = State(initialValue: entitlements)
-        _themes = State(initialValue: ThemeStore(entitlements: entitlements))
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
     }
 
     var body: some Scene {
         WindowGroup {
-            ContentView(activationStatus: activationStatus)
+            ContentView()
                 .environmentObject(bottle)
-                .environment(entitlements)
-                .environment(themes)
                 .frame(minWidth: 520, minHeight: 480)
                 .task { await bottle.refresh() }
                 .preferredColorScheme(.dark)
-                .onOpenURL { url in
-                    activationStatus = handleActivation(url)
-                }
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
         .commands {
             CommandGroup(replacing: .newItem) {}
+            CommandGroup(after: .appInfo) {
+                CheckForUpdatesView(updater: updaterController.updater)
+            }
         }
 
         Settings {
@@ -40,32 +39,29 @@ struct D4MacApp: App {
                 .tint(.bnetBlue)
         }
     }
+}
 
-    private func handleActivation(_ url: URL) -> ActivationStatus {
-        guard url.scheme == "d4mac",
-              url.host == "activate",
-              let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              let token = comps.queryItems?.first(where: { $0.name == "token" })?.value
-        else {
-            return .error("Malformed activation URL")
-        }
-        do {
-            try entitlements.ingest(token)
-            themes.reconcile()
-            return .success(skinCount: entitlements.ownedSkins.count)
-        } catch {
-            return .error(String(describing: error))
-        }
+private struct CheckForUpdatesView: View {
+    @ObservedObject private var viewModel: CheckForUpdatesViewModel
+    private let updater: SPUUpdater
+
+    init(updater: SPUUpdater) {
+        self.updater = updater
+        self.viewModel = CheckForUpdatesViewModel(updater: updater)
+    }
+
+    var body: some View {
+        Button("Check for Updates…", action: updater.checkForUpdates)
+            .disabled(!viewModel.canCheckForUpdates)
     }
 }
 
-enum ActivationStatus: Equatable {
-    case idle
-    case success(skinCount: Int)
-    case error(String)
+@MainActor
+private final class CheckForUpdatesViewModel: ObservableObject {
+    @Published var canCheckForUpdates = false
 
-    var isIdle: Bool {
-        if case .idle = self { return true }
-        return false
+    init(updater: SPUUpdater) {
+        updater.publisher(for: \.canCheckForUpdates)
+            .assign(to: &$canCheckForUpdates)
     }
 }

@@ -3,9 +3,6 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @EnvironmentObject var bottle: BottleManager
-    @Environment(EntitlementStore.self) private var entitlements
-    @Environment(ThemeStore.self) private var themes
-    let activationStatus: ActivationStatus
 
     @State private var showInstallerPicker = false
     @State private var showError = false
@@ -16,10 +13,14 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            themes.current.background.ignoresSafeArea()
+            LinearGradient(
+                colors: [.appBgTop, .appBgBottom],
+                startPoint: .top, endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
             RadialGradient(
-                colors: [themes.current.accent.opacity(0.18), themes.current.accent.opacity(0)],
+                colors: [Color.bnetBlue.opacity(0.18), Color.bnetBlue.opacity(0)],
                 center: .top,
                 startRadius: 0,
                 endRadius: 320
@@ -31,12 +32,11 @@ struct ContentView: View {
             VStack(spacing: 18) {
                 Spacer(minLength: 8)
                 header
-                if !activationStatus.isIdle { activationToast }
                 Spacer(minLength: 0)
                 primaryAction
                 if bottle.phase != .idle { phaseBanner }
                 Spacer(minLength: 0)
-                skinSection
+                BeerTipView()
                 footer
             }
             .padding(.horizontal, 32)
@@ -57,7 +57,6 @@ struct ContentView: View {
         ) { result in
             handleInstallerPick(result)
         }
-        .animation(.smooth(duration: 0.35), value: themes.current.id)
     }
 
     // MARK: - Header
@@ -68,38 +67,13 @@ struct ContentView: View {
                 .font(.system(size: 44, weight: .semibold, design: .rounded))
                 .foregroundStyle(
                     LinearGradient(
-                        colors: themes.current.titleGradient,
+                        colors: [.white, .bnetBlue],
                         startPoint: .top, endPoint: .bottom
                     )
                 )
             Text("Battle.net on Apple Silicon")
                 .font(.system(.subheadline, design: .rounded))
                 .foregroundStyle(Color.appSubhead)
-        }
-    }
-
-    // MARK: - Activation toast
-
-    @ViewBuilder
-    private var activationToast: some View {
-        switch activationStatus {
-        case .idle:
-            EmptyView()
-        case .success(let count):
-            Label(
-                "Activated — \(count) skin\(count == 1 ? "" : "s") unlocked",
-                systemImage: "checkmark.seal.fill"
-            )
-            .foregroundStyle(.green)
-            .padding(.horizontal, 14).padding(.vertical, 10)
-            .background(Color.green.opacity(0.14), in: RoundedRectangle(cornerRadius: 10))
-        case .error(let message):
-            Label("Activation failed: \(message)", systemImage: "xmark.octagon.fill")
-                .foregroundStyle(.red)
-                .multilineTextAlignment(.leading)
-                .padding(.horizontal, 14).padding(.vertical, 10)
-                .background(Color.red.opacity(0.14), in: RoundedRectangle(cornerRadius: 10))
-                .frame(maxWidth: 440)
         }
     }
 
@@ -235,49 +209,10 @@ struct ContentView: View {
         .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
-    // MARK: - Skin section
-
-    private var skinSection: some View {
-        VStack(spacing: 10) {
-            HStack {
-                Text("Theme")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button {
-                    NSWorkspace.shared.open(Endpoints.skinsPageURL)
-                } label: {
-                    Label("Get more", systemImage: "sparkles")
-                        .font(.callout)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(themes.current.accent)
-                .help("Browse all skins on d4mac.com")
-            }
-            HStack(spacing: 12) {
-                ForEach(themes.available, id: \.id) { theme in
-                    ThemeChip(theme: theme)
-                }
-                Spacer(minLength: 0)
-            }
-        }
-        .padding(14)
-        .background(themes.current.surface.opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
-        .frame(maxWidth: 460)
-    }
-
     // MARK: - Footer
 
     private var footer: some View {
         HStack {
-            if entitlements.hasLicense {
-                Label(
-                    "\(entitlements.ownedSkins.count) skin\(entitlements.ownedSkins.count == 1 ? "" : "s") owned",
-                    systemImage: "lock.open.fill"
-                )
-                .font(.caption2)
-                .foregroundStyle(.green.opacity(0.75))
-            }
             Spacer()
             Text(versionString)
                 .font(.caption2)
@@ -299,51 +234,5 @@ struct ContentView: View {
             guard let url = urls.first else { return }
             Task { await bottle.runInstaller(url) }
         }
-    }
-}
-
-// MARK: - Theme chip
-
-struct ThemeChip: View {
-    @Environment(ThemeStore.self) private var themes
-    let theme: any AppTheme
-
-    var body: some View {
-        let isSelected = themes.current.id == theme.id
-        let unlocked = themes.canUse(theme)
-
-        Button {
-            if unlocked {
-                themes.select(theme)
-            } else if let entitlement = theme.requiredEntitlement {
-                NSWorkspace.shared.open(Endpoints.buyURL(for: entitlement))
-            }
-        } label: {
-            VStack(spacing: 4) {
-                ZStack {
-                    Circle()
-                        .fill(LinearGradient(colors: theme.titleGradient, startPoint: .top, endPoint: .bottom))
-                        .frame(width: 38, height: 38)
-                    if !unlocked {
-                        Circle().fill(.black.opacity(0.55))
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(.white)
-                    }
-                }
-                .overlay(
-                    Circle()
-                        .stroke(isSelected ? Color.white : .clear, lineWidth: 2.5)
-                        .padding(-3)
-                )
-                .frame(width: 38, height: 38)
-
-                Text(theme.displayName)
-                    .font(.caption2)
-                    .foregroundStyle(unlocked ? .primary : .secondary)
-            }
-        }
-        .buttonStyle(.plain)
-        .help(unlocked ? "Use \(theme.displayName)" : "Buy \(theme.displayName) — opens Stripe")
     }
 }

@@ -20,7 +20,7 @@ private let beerTaglines: [String] = [
     "Battle-tested. Bottle-powered.",
     "Buy a beer, unlock zero achievements. Worth it anyway.",
     "Free as in beer. Tip as in beer.",
-    "Saved you 74 dollars. Asks for five. Math checks out.",
+    "Free launcher. Five-buck beer. Math checks out.",
     "Andariel's Visage doesn't have a tip option. This does.",
     "Tipping the dev: +5 to Karma, untyped, doesn't stack.",
     "Sanctuary's saved. Tip the night-shift sysadmin.",
