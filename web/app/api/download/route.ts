@@ -1,21 +1,25 @@
 import { NextResponse } from "next/server";
 import { incrementDownloads } from "@/lib/downloads";
+import { getReleaseDownloadUrl } from "@/lib/storage";
 
-/// `GET /api/download` increments the counter and 302-redirects to the
-/// release URL. Set `D4MAC_RELEASE_URL` to a Railway Bucket / R2 / static
-/// download URL pointing at the latest signed `.dmg`.
+/// `GET /api/download`:
+///   1. Generate a fresh 1-hour presigned URL for the .dmg in the
+///      Railway Bucket.
+///   2. INCR the Postgres counter.
+///   3. 302-redirect the browser at the presigned URL.
+///
+/// Returns 503 if the bucket isn't configured (no AWS_* env vars set).
 export async function GET() {
-  const target = process.env.D4MAC_RELEASE_URL;
+  const target = await getReleaseDownloadUrl();
   if (!target) {
     return NextResponse.json(
-      { error: "Release not configured. Set D4MAC_RELEASE_URL." },
+      { error: "Release not available. Bucket credentials missing." },
       { status: 503 },
     );
   }
-  const newCount = await incrementDownloads();
+  const count = await incrementDownloads();
   console.log("download_click", {
-    target,
-    count: newCount,
+    count,
     ts: new Date().toISOString(),
   });
   return NextResponse.redirect(target, 302);
