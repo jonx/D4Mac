@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @EnvironmentObject var bottle: BottleManager
@@ -51,7 +52,7 @@ struct ContentView: View {
         }
         .fileImporter(
             isPresented: $showInstallerPicker,
-            allowedContentTypes: [.application, .item],
+            allowedContentTypes: [UTType(filenameExtension: "exe") ?? .data],
             allowsMultipleSelection: false
         ) { result in
             handleInstallerPick(result)

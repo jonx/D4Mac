@@ -20,7 +20,7 @@ final class BottleManager: ObservableObject {
     enum Phase: Equatable {
         case idle
         case preparingPrefix            // wineboot + GPTK deploy
-        case installingFonts            // MS Core Fonts via macOS symlinks
+        case installingFonts            // copy bundled MS Core Fonts + Source Han Sans
         case installingPrereqs          // Microsoft VC++ runtime, etc.
         case runningInstaller           // BNet installer in Wine
         case launchingBattleNet         // Battle.net.exe running
@@ -43,7 +43,7 @@ final class BottleManager: ObservableObject {
             case .preparingPrefix:
                 "Initialising Wine and copying graphics drivers. Takes ~30 s on first run."
             case .installingFonts:
-                "Linking macOS-bundled Arial / Times / Courier / Verdana / etc. into the Wine prefix so Windows apps render text correctly."
+                "Copying Arial / Times / Verdana + Source Han Sans (CJK) into the Wine prefix so Windows apps render text correctly."
             case .installingPrereqs:
                 "Installing Microsoft VC++ runtime so Battle.net's UI can start. Takes ~1 min on first run."
             case .runningInstaller:
@@ -85,8 +85,6 @@ final class BottleManager: ObservableObject {
     var wineserverBin: URL { wineRuntime.appendingPathComponent("bin/wineserver") }
     var libExternal: URL { wineRuntime.appendingPathComponent("lib/external") }
     var gptkPEDir: URL { wineRuntime.appendingPathComponent("lib/wine/x86_64-windows") }
-    var dxmt32Dir: URL { wineRuntime.appendingPathComponent("lib/external/dxmt/i386-windows") }
-    var dxmt64Dir: URL { wineRuntime.appendingPathComponent("lib/external/dxmt/x86_64-windows") }
 
     /// Path to BNet's main executable inside the bottle, if installed.
     var bnetExe: URL {
@@ -98,10 +96,6 @@ final class BottleManager: ObservableObject {
 
     var systemDir32: URL {
         bottleRoot.appendingPathComponent("drive_c/windows/system32", isDirectory: true)
-    }
-
-    var systemDirWow64: URL {
-        bottleRoot.appendingPathComponent("drive_c/windows/syswow64", isDirectory: true)
     }
 
     // MARK: - State refresh
@@ -145,116 +139,87 @@ final class BottleManager: ObservableObject {
         }
     }
 
-    /// Initialize the Wine prefix (wineboot) and deploy GPTK D3DMetal
-    /// binaries into bottle/drive_c/windows/system32. Idempotent.
+    /// Initialize the bottle from scratch using our bundled Wine.
+    ///
+    /// The chain: `wineboot --init` → corefonts symlinks → vc_redist install
+    /// → GPTK D3D12 forwarders for D4. BNet renders fine on this with the
+    /// `WINE_SIMULATE_WRITECOPY=1` env var set at launch time (CW Hack 22996,
+    /// already compiled into our LGPL Wine source). See
+    /// `project_bnet_no_cx_recipe.md` for the verified bisect.
     func ensureBottle() async throws {
         try verifyRuntime()
-        try FileManager.default.createDirectory(at: bottleRoot, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: supportRoot, withIntermediateDirectories: true)
 
-        if !FileManager.default.fileExists(atPath: systemDir32.path) {
+        let fm = FileManager.default
+        let alreadyInitialised = fm.fileExists(atPath: systemDir32.path)
+
+        if !alreadyInitialised {
             phase = .preparingPrefix
-            log.info("first-time wineboot for \(self.bottleRoot.path)")
-            // First wine invocation auto-runs wineboot; do an explicit one for clarity.
-            let boot = WineProcess(
-                wine: wineBin,
-                prefix: bottleRoot,
-                externalLibDir: libExternal,
-                args: ["wineboot", "--init"]
-            )
-            do {
-                _ = try await boot.run()
-            } catch {
-                throw D4MacError(
-                    "Couldn't initialise Wine prefix.",
-                    "wineboot failed: \(error.localizedDescription). Try resetting the bottle from Settings → Advanced."
-                )
-            }
-
+            log.info("running wineboot --init → \(self.bottleRoot.path)")
+            try await runWineboot()
         }
 
-        // Idempotent — applies on every ensureBottle so existing bottles
-        // get fixed too if they predate this code.
         try? await disableCrashDialog()
         try await deployGPTKBinaries()
-        try await deployDXMTBinaries()
         try installCoreFonts()
         try await installPrerequisites()
     }
 
-    /// Equivalent of `winetricks corefonts` but with zero downloads. macOS
-    /// ships all the MS Core Fonts For The Web in `/System/Library/Fonts/
-    /// Supplemental/` (Apple licensed them for Office-for-Mac compatibility).
-    /// We symlink each one into `bottle/drive_c/windows/Fonts/` with the
-    /// Windows-expected filename so apps that load fonts by exact filename
-    /// (`arial.ttf`, `times.ttf`, …) find them.
+    /// `wine wineboot --init` against our prefix. Creates drive_c skeleton,
+    /// system.reg/user.reg, and the wine fake PE DLLs in system32/syswow64.
+    private func runWineboot() async throws {
+        let proc = WineProcess(
+            wine: wineBin,
+            prefix: bottleRoot,
+            externalLibDir: libExternal,
+            args: ["wineboot", "--init"]
+        )
+        let status = try await proc.run()
+        guard status == 0 else {
+            throw D4MacError(
+                "wineboot --init failed (exit \(status)).",
+                "The bundled Wine couldn't initialise a prefix at \(bottleRoot.path). Try resetting the bottle and retrying."
+            )
+        }
+    }
+
+    /// Copy every font from the bundled `Resources/Fonts/` directory into
+    /// `bottle/drive_c/windows/Fonts/`. The bundled set mirrors what CrossOver
+    /// ships in their BNet bottle: MS Core Fonts For The Web (Arial, Times,
+    /// Verdana, …) under their original Windows filenames, plus Source Han
+    /// Sans for CJK rendering. APFS clone-on-write keeps disk overhead minimal.
     private func installCoreFonts() throws {
         let marker = bottleRoot.appendingPathComponent(".d4mac-corefonts-installed")
         if FileManager.default.fileExists(atPath: marker.path) { return }
 
         phase = .installingFonts
 
-        let macFontDir = URL(fileURLWithPath: "/System/Library/Fonts/Supplemental")
+        let bundleFontDir = Bundle.main.bundleURL
+            .appendingPathComponent("Contents/Resources/Fonts", isDirectory: true)
+        guard FileManager.default.fileExists(atPath: bundleFontDir.path) else {
+            log.warning("Resources/Fonts not bundled at \(bundleFontDir.path) — skipping font deploy")
+            return
+        }
+
         let winFontDir = bottleRoot.appendingPathComponent(
             "drive_c/windows/Fonts", isDirectory: true
         )
-        try FileManager.default.createDirectory(at: winFontDir, withIntermediateDirectories: true)
-
-        // [macOS filename : Windows filename] — covers the standard winetricks
-        // corefonts set plus a few Windows extras (Tahoma, Wingdings) that
-        // Blizzard installers occasionally use.
-        let mapping: [(String, String)] = [
-            ("Arial.ttf",                       "arial.ttf"),
-            ("Arial Bold.ttf",                  "arialbd.ttf"),
-            ("Arial Italic.ttf",                "ariali.ttf"),
-            ("Arial Bold Italic.ttf",           "arialbi.ttf"),
-            ("Arial Black.ttf",                 "ariblk.ttf"),
-            ("Comic Sans MS.ttf",               "comic.ttf"),
-            ("Comic Sans MS Bold.ttf",          "comicbd.ttf"),
-            ("Courier New.ttf",                 "cour.ttf"),
-            ("Courier New Bold.ttf",            "courbd.ttf"),
-            ("Courier New Italic.ttf",          "couri.ttf"),
-            ("Courier New Bold Italic.ttf",     "courbi.ttf"),
-            ("Georgia.ttf",                     "georgia.ttf"),
-            ("Georgia Bold.ttf",                "georgiab.ttf"),
-            ("Georgia Italic.ttf",              "georgiai.ttf"),
-            ("Georgia Bold Italic.ttf",         "georgiaz.ttf"),
-            ("Impact.ttf",                      "impact.ttf"),
-            ("Tahoma.ttf",                      "tahoma.ttf"),
-            ("Tahoma Bold.ttf",                 "tahomabd.ttf"),
-            ("Times New Roman.ttf",             "times.ttf"),
-            ("Times New Roman Bold.ttf",        "timesbd.ttf"),
-            ("Times New Roman Italic.ttf",      "timesi.ttf"),
-            ("Times New Roman Bold Italic.ttf", "timesbi.ttf"),
-            ("Trebuchet MS.ttf",                "trebuc.ttf"),
-            ("Trebuchet MS Bold.ttf",           "trebucbd.ttf"),
-            ("Trebuchet MS Italic.ttf",         "trebucit.ttf"),
-            ("Trebuchet MS Bold Italic.ttf",    "trebucbi.ttf"),
-            ("Verdana.ttf",                     "verdana.ttf"),
-            ("Verdana Bold.ttf",                "verdanab.ttf"),
-            ("Verdana Italic.ttf",              "verdanai.ttf"),
-            ("Verdana Bold Italic.ttf",         "verdanaz.ttf"),
-            ("Webdings.ttf",                    "webdings.ttf"),
-            ("Wingdings.ttf",                   "wingding.ttf"),
-        ]
-
         let fm = FileManager.default
-        var linked = 0
-        for (macName, winName) in mapping {
-            let src = macFontDir.appendingPathComponent(macName)
-            let dst = winFontDir.appendingPathComponent(winName)
-            guard fm.fileExists(atPath: src.path) else {
-                log.debug("font missing on host, skipping: \(macName)")
-                continue
-            }
+        try fm.createDirectory(at: winFontDir, withIntermediateDirectories: true)
+
+        let bundledFiles = try fm.contentsOfDirectory(at: bundleFontDir, includingPropertiesForKeys: nil)
+        var copied = 0
+        for src in bundledFiles {
+            let dst = winFontDir.appendingPathComponent(src.lastPathComponent)
             try? fm.removeItem(at: dst)
             do {
-                try fm.createSymbolicLink(at: dst, withDestinationURL: src)
-                linked += 1
+                try fm.copyItem(at: src, to: dst)
+                copied += 1
             } catch {
-                log.warning("couldn't symlink \(winName): \(error.localizedDescription)")
+                log.warning("couldn't copy \(src.lastPathComponent): \(error.localizedDescription)")
             }
         }
-        log.info("linked \(linked) MS Core Fonts into bottle")
+        log.info("copied \(copied) bundled fonts into bottle")
         try? "ok".write(to: marker, atomically: true, encoding: .utf8)
     }
 
@@ -356,47 +321,6 @@ final class BottleManager: ObservableObject {
         }
     }
 
-    /// Replace Wine's stock 32-bit `d3d11`/`d3d10core`/`dxgi`/`winemetal` in
-    /// the bottle's syswow64 with DXMT's, giving 32-bit processes (notably
-    /// Battle.net's CEF) a real D3D11→Metal backend. D3DMetal's 64-bit
-    /// forwarders in system32 stay untouched so D4's D3D12 path is unaffected.
-    /// 64-bit `winemetal.dll` in system32 is also swapped to the DXMT version
-    /// so it pairs correctly with the DXMT `winemetal.so` bridge that ships
-    /// in the runtime (replacing the D3DMetal libd3dshared symlink).
-    private func deployDXMTBinaries() async throws {
-        let fm = FileManager.default
-
-        guard fm.fileExists(atPath: dxmt32Dir.appendingPathComponent("d3d11.dll").path) else {
-            log.info("DXMT not staged in runtime; skipping DXMT deploy")
-            return
-        }
-
-        try fm.createDirectory(at: systemDirWow64, withIntermediateDirectories: true)
-
-        for dll in ["d3d11.dll", "d3d10core.dll", "dxgi.dll", "winemetal.dll"] {
-            let src = dxmt32Dir.appendingPathComponent(dll)
-            let dst = systemDirWow64.appendingPathComponent(dll)
-            guard fm.fileExists(atPath: src.path) else { continue }
-            let bak = systemDirWow64.appendingPathComponent("\(dll).before-dxmt")
-            if fm.fileExists(atPath: dst.path) && !fm.fileExists(atPath: bak.path) {
-                try? fm.moveItem(at: dst, to: bak)
-            }
-            try? fm.removeItem(at: dst)
-            try fm.copyItem(at: src, to: dst)
-        }
-
-        let metalSrc = dxmt64Dir.appendingPathComponent("winemetal.dll")
-        if fm.fileExists(atPath: metalSrc.path) {
-            let metalDst = systemDir32.appendingPathComponent("winemetal.dll")
-            let metalBak = systemDir32.appendingPathComponent("winemetal.dll.before-dxmt")
-            if fm.fileExists(atPath: metalDst.path) && !fm.fileExists(atPath: metalBak.path) {
-                try? fm.moveItem(at: metalDst, to: metalBak)
-            }
-            try? fm.removeItem(at: metalDst)
-            try fm.copyItem(at: metalSrc, to: metalDst)
-        }
-    }
-
     // MARK: - Installer
 
     /// Run an arbitrary BNet installer .exe inside the bottle. Used for
@@ -465,10 +389,68 @@ final class BottleManager: ObservableObject {
                 "D4Mac runs Windows installers via Wine. Pick Battle.net-Setup.exe — not a .dmg, .pkg, or .zip."
             )
         }
-        if !lower.contains("battle") && !lower.contains("setup") {
-            // Soft warning — still allow but log
-            log.warning("installer name \(url.lastPathComponent) doesn't look like Battle.net — proceeding anyway")
+        // Strict: must look like Battle.net-Setup.exe. Other .exe files in
+        // this prefix are unsupported and frequently break the bottle (e.g.
+        // installing other game launchers, random Windows apps, etc.).
+        if !lower.hasPrefix("battle.net-setup") {
+            throw D4MacError(
+                "Only Battle.net-Setup.exe is supported.",
+                "D4Mac is purpose-built for Battle.net + Diablo IV. Download Battle.net-Setup.exe from blizzard.com and pick that file. Other installers will be rejected."
+            )
         }
+    }
+
+    // MARK: - BNet config seeding
+
+    /// Seed `Battle.net.config` with the login URLs so a freshly-installed
+    /// BNet doesn't get stuck on its "Select your region" wall (where the
+    /// renderer paints `resources://icon_error.png` because `LastLoginTassadar`
+    /// is empty). Idempotent — only writes if the keys are missing.
+    ///
+    /// CrossOver bottles already have these values from prior logins; ours
+    /// don't, because BNet only writes them after a successful login flow,
+    /// and we can't get to login without them.
+    func seedBNetConfig() {
+        let configURL = bottleRoot.appendingPathComponent(
+            "drive_c/users/crossover/AppData/Roaming/Battle.net/Battle.net.config",
+            isDirectory: false
+        )
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: configURL.path),
+              let data = try? Data(contentsOf: configURL),
+              var json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return }
+
+        // BNet's per-account block uses a hashed-key name. There's typically
+        // exactly one such top-level key — find it by looking for a child
+        // dict with a "Services" subdict.
+        let accountKey = json.keys.first { key in
+            guard let inner = json[key] as? [String: Any] else { return false }
+            return inner["Services"] != nil
+        }
+        guard let accountKey,
+              var account = json[accountKey] as? [String: Any],
+              var services = account["Services"] as? [String: Any]
+        else { return }
+
+        var changed = false
+        if services["LastLoginAddress"] == nil {
+            services["LastLoginAddress"] = "us.actual.battle.net"
+            changed = true
+        }
+        if services["LastLoginTassadar"] == nil {
+            services["LastLoginTassadar"] = "account.battle.net"
+            changed = true
+        }
+        guard changed else { return }
+
+        account["Services"] = services
+        json[accountKey] = account
+        guard let out = try? JSONSerialization.data(
+            withJSONObject: json, options: [.prettyPrinted]
+        ) else { return }
+        try? out.write(to: configURL)
+        log.info("seeded Battle.net.config Services URLs")
     }
 
     // MARK: - Reset

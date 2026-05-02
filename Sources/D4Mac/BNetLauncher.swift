@@ -3,11 +3,16 @@ import os.log
 
 /// Wraps a `wine` subprocess invocation with the env vars the D3DMetal stack
 /// needs. Mirrors `launch-d4-direct.sh` in the parent project.
+///
+/// `extraEnv` overrides anything in the default env. Used to add the BNet-
+/// specific knobs (`ROSETTA_ADVERTISE_AVX`, `DOTNET_EnableWriteXorExecute`)
+/// that CrossOver's Perl `bin/wine` wrapper sets when launching BNet.
 struct WineProcess {
     let wine: URL
     let prefix: URL
     let externalLibDir: URL
     let args: [String]
+    var extraEnv: [String: String] = [:]
 
     private static let log = Logger(subsystem: "com.d4mac.app", category: "wine")
 
@@ -33,6 +38,7 @@ struct WineProcess {
         env["D3DM_DEVICE_ID"] = "0x0209"
         env["D3DM_DEVICE_DESCRIPTION"] = "Apple GPU"
 
+        for (k, v) in extraEnv { env[k] = v }
         return env
     }
 
@@ -67,15 +73,17 @@ extension BottleManager {
     /// Spawn Battle.net.exe in the foreground. Returns when BNet exits.
     /// User sees BNet's normal window; D4Mac stays available behind it.
     ///
-    /// Battle.net's UI is built on Chromium Embedded Framework (CEF). On Wine,
-    /// CEF's renderer sandbox crashes with `int3` in libcef because it relies
-    /// on Windows-specific NT APIs Wine doesn't fully implement. Passing
-    /// `--no-sandbox`, `--in-process-gpu`, and `--use-gl=swiftshader` is the
-    /// minimum set that works: swiftshader (CPU rasterizer) routes around
-    /// CEF's GPU init pickiness. DXMT provides a real D3D11 backend in
-    /// syswow64 which CEF prefers when GLES 3 init fails, but ANGLE-on-DXMT
-    /// alone (no `--use-gl` flag) hangs CEF's body load — DXMT v0.72 lacks
-    /// a feature ANGLE expects. Keep the swiftshader flag.
+    /// BNet renders on our bundled LGPL Wine 11.0 with one critical env var:
+    /// `WINE_SIMULATE_WRITECOPY=1` enables CW Hack 22996 which is already
+    /// compiled into our build (the patch is in the public CrossOver LGPL
+    /// source at `dlls/ntdll/unix/{loader,virtual}.c`). Without it, CEF's
+    /// renderer hits an `int3` at `libcef.dll+0x16D00E1` because
+    /// `VirtualProtect` returns `PAGE_WRITECOPY` (8) where libcef expects
+    /// `PAGE_READWRITE` (4). With it, the renderer paints normally.
+    ///
+    /// The bottle's `drive_c/windows/` is produced by our `wineboot --init`
+    /// — no CrossOver content required. See `project_bnet_no_cx_recipe.md`
+    /// for the bisect that proved this. `ensureBottle()` handles setup.
     func launchBattleNet() async {
         defer { phase = .idle }
         guard case .ready(let bnetPath) = state else {
@@ -95,6 +103,12 @@ extension BottleManager {
             // is scoped to WINEPREFIX so we only affect our bottle.
             await killWineProcesses()
 
+            // First-launch seeding: BNet's config from a fresh install lacks
+            // Services.LastLoginTassadar, which deadlocks the renderer on a
+            // Select-Your-Region wall. Idempotent — does nothing on subsequent
+            // launches once BNet has logged in once.
+            seedBNetConfig()
+
             let proc = WineProcess(
                 wine: wineBin,
                 prefix: bottleRoot,
@@ -102,8 +116,14 @@ extension BottleManager {
                 args: [
                     bnetPath,
                     "--in-process-gpu",
-                    "--use-gl=swiftshader",
-                    "--no-sandbox"
+                    "--use-gl=swiftshader"
+                ],
+                extraEnv: [
+                    "WINE_SIMULATE_WRITECOPY": "1",
+                    "WINE_LARGE_ADDRESS_AWARE": "1",
+                    "WINE_HEAP_ZERO_MEMORY": "1",
+                    "ROSETTA_ADVERTISE_AVX": "1",
+                    "DOTNET_EnableWriteXorExecute": "0"
                 ]
             )
             let status = try await proc.run()

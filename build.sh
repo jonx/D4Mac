@@ -67,6 +67,19 @@ for f in vc_redist.x64.exe vc_redist.x86.exe; do
   fi
 done
 
+# Bundled fonts — copied as-is into bottle/drive_c/windows/Fonts at install
+# time. Set mirrors what CrossOver ships in their BNet bottle: MS Core Fonts
+# For The Web with the original Windows-expected filenames, plus Source Han
+# Sans for CJK rendering. APFS clone keeps the build cheap.
+FONTS_SRC="$SCRIPT_DIR/Resources/Fonts"
+FONTS_DST="$APP/Contents/Resources/Fonts"
+if [ -d "$FONTS_SRC" ]; then
+  cp -cR "$FONTS_SRC" "$FONTS_DST"
+  echo "bundled fonts ($(ls "$FONTS_DST" | wc -l | tr -d ' ') files, $(du -sh "$FONTS_DST" | awk '{print $1}'))"
+else
+  echo "warning: missing $FONTS_SRC — bottle setup will skip font deploy"
+fi
+
 echo "==> copy Wine runtime ($(du -sh "$WINE_RUNTIME" | awk '{print $1}'))"
 # clone-on-write copy; on APFS this is instant + zero extra disk.
 cp -cR "$WINE_RUNTIME" "$APP/Contents/SharedSupport/Wine"
