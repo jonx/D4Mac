@@ -9,7 +9,7 @@ function originFor(req: NextRequest): string {
   return `${proto}://${host}`;
 }
 
-/** POST /api/checkout — creates a $5 coffee tip checkout session, adjustable 1–50. */
+/** POST /api/checkout — creates a $5 beer tip checkout session, adjustable 1–50. */
 export async function POST(req: NextRequest) {
   const origin = originFor(req);
   try {
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: "Coffee for D4Mac",
+              name: "Beer for D4Mac",
               description: "Thanks for supporting open-source Mac gaming.",
             },
             unit_amount: 500,
@@ -32,8 +32,8 @@ export async function POST(req: NextRequest) {
         },
       ],
       payment_intent_data: {
-        description: "Coffee for D4Mac",
-        statement_descriptor_suffix: "D4MAC TIP",
+        description: "Beer for D4Mac",
+        statement_descriptor_suffix: "D4MAC BEER",
       },
       success_url: `${origin}/?status=thanks`,
       cancel_url: `${origin}/?status=cancelled`,

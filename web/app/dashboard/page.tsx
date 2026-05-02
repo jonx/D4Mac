@@ -35,7 +35,7 @@ async function fetchData() {
   const paid = sessions.data.filter((s) => s.payment_status === "paid");
 
   const totalRevenue = paid.reduce((sum, s) => sum + (s.amount_total ?? 0), 0);
-  const totalCoffees = paid.reduce((sum, s) => {
+  const totalBeers = paid.reduce((sum, s) => {
     const qty = (s.line_items?.data ?? []).reduce(
       (q, li) => q + (li.quantity ?? 1),
       0,
@@ -50,7 +50,7 @@ async function fetchData() {
 
   return {
     totalRevenue,
-    totalCoffees,
+    totalBeers,
     totalSessions,
     downloadCount,
     conversionPct,
@@ -122,7 +122,7 @@ export default async function DashboardPage({
         }}
       >
         <Stat label="Tips received" value={fmtMoney(data.totalRevenue)} accent />
-        <Stat label="Coffees" value={data.totalCoffees.toString()} />
+        <Stat label="Beers" value={data.totalBeers.toString()} />
         <Stat
           label="Downloads"
           value={

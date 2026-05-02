@@ -22,7 +22,6 @@ export const metadata: Metadata = {
     "free Battle.net launcher",
     "Whisky alternative",
     "Mythic alternative",
-    "CrossOver alternative",
   ],
   authors: [{ name: `${SITE.name} contributors` }],
   alternates: { canonical: "/" },

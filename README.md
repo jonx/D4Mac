@@ -3,7 +3,7 @@
 > Free, open-source Battle.net launcher for Apple Silicon Macs. Run Diablo IV
 > and other Blizzard games natively. No CrossOver licence. No subscription.
 
-🌐 [d4mac.com](https://d4mac.com) · 📥 [Download latest](https://github.com/MichaelLod/D4Mac/releases/latest) · 🐛 [Report an issue](https://github.com/MichaelLod/D4Mac/issues/new/choose) · ☕ [Buy me a coffee](https://d4mac.com/#coffee)
+🌐 [d4mac.com](https://d4mac.com) · 📥 [Download latest](https://github.com/MichaelLod/D4Mac/releases/latest) · 🐛 [Report an issue](https://github.com/MichaelLod/D4Mac/issues/new/choose) · 🍺 [Buy me a beer](https://d4mac.com/#beer)
 
 ---
 
@@ -55,7 +55,7 @@ CrossOver is $74 and bundles features most users don't need. Apple's GPTK
 is free for non-commercial redistribution, and Wine has been LGPL since
 forever. There was no reason this had to cost anything — so it doesn't.
 
-D4Mac is funded entirely by [coffee tips](https://d4mac.com/#coffee).
+D4Mac is funded entirely by [beer tips](https://d4mac.com/#beer).
 Optional, never gated, no nag.
 
 ## Build from source

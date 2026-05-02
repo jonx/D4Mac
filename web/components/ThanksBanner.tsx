@@ -16,5 +16,5 @@ export function ThanksBanner() {
   }, []);
 
   if (!visible) return null;
-  return <div className="thanks-banner">Thanks for the coffee. Truly.</div>;
+  return <div className="thanks-banner">Thanks for the beer. Truly.</div>;
 }

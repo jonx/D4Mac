@@ -1,5 +1,5 @@
-import { CoffeeButton } from "@/components/CoffeeButton";
-import { CoffeeTagline } from "@/components/CoffeeTagline";
+import { BeerButton } from "@/components/BeerButton";
+import { BeerTagline } from "@/components/BeerTagline";
 import { DownloadButton } from "@/components/DownloadModal";
 import { GitHubCorner } from "@/components/GitHubCorner";
 import { ThanksBanner } from "@/components/ThanksBanner";
@@ -29,8 +29,8 @@ export default async function Page() {
               on your Mac.
             </h1>
             <p className="lede">
-              A free Battle.net launcher for Apple Silicon. No CrossOver
-              licence. No monthly fee. Drag, drop, play.
+              A free Battle.net launcher for Apple Silicon, built on Wine and
+              Apple&apos;s Game Porting Toolkit. Drag, drop, play.
             </p>
 
             <DownloadButton>
@@ -53,14 +53,14 @@ export default async function Page() {
           </div>
         </section>
 
-        <section className="coffee" id="coffee">
+        <section className="beer" id="beer">
           <div className="container">
-            <CoffeeTagline />
-            <p className="coffee-lede">
-              D4Mac is free forever. If it saved you the $74 CrossOver licence,
-              a coffee helps keep it that way.
+            <BeerTagline />
+            <p className="beer-lede">
+              D4Mac is free forever. If it earned a beer, the tip jar&apos;s
+              right there — every drop helps keep it that way.
             </p>
-            <CoffeeButton />
+            <BeerButton />
             <p className="fineprint">
               Secure checkout via Stripe. $5 each, buy as many as you like.
             </p>

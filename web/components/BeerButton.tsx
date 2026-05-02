@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export function CoffeeButton() {
+export function BeerButton() {
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
@@ -36,15 +36,14 @@ export function CoffeeButton() {
         strokeLinejoin="round"
         aria-hidden="true"
       >
-        <path d="M17 8h1a4 4 0 0 1 0 8h-1" />
-        <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z" />
-        <g className="coffee-steam">
-          <line x1="6" y1="2" x2="6" y2="4" />
-          <line x1="10" y1="2" x2="10" y2="4" />
-          <line x1="14" y1="2" x2="14" y2="4" />
-        </g>
+        {/* foam: bumpy line */}
+        <path d="M4 7c1.2-1.6 2.6-1.6 3.8 0c1.2 1.6 2.6 1.6 3.8 0c1.2-1.6 2.6-1.6 3.8 0" />
+        {/* mug body */}
+        <path d="M4 8h12v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z" />
+        {/* handle */}
+        <path d="M16 11h2.5a2.5 2.5 0 0 1 0 5H16" />
       </svg>
-      <span>{loading ? "Opening checkout…" : "Buy me a coffee"}</span>
+      <span>{loading ? "Opening checkout…" : "Buy me a beer"}</span>
     </button>
   );
 }
