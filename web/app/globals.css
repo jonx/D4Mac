@@ -646,3 +646,34 @@ footer p + p {
   from { opacity: 0; transform: scale(0.94); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* ---------- GitHub corner ---------- */
+.github-corner {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 100;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.github-corner .gh-tri { fill: var(--accent-2); }
+.github-corner .gh-arm,
+.github-corner .gh-body { fill: var(--bg); }
+.github-corner .gh-arm { transform-origin: 130px 106px; }
+
+.github-corner:hover .gh-arm {
+  animation: octocat-wave 560ms ease-in-out;
+}
+
+@keyframes octocat-wave {
+  0%, 100% { transform: rotate(0); }
+  20%, 60% { transform: rotate(-25deg); }
+  40%, 80% { transform: rotate(10deg); }
+}
+
+@media (max-width: 500px) {
+  .github-corner svg { width: 60px; height: 60px; }
+  .github-corner:hover .gh-arm { animation: none; }
+  .github-corner .gh-arm { animation: octocat-wave 560ms ease-in-out; }
+}

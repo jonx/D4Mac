@@ -1,6 +1,7 @@
 import { CoffeeButton } from "@/components/CoffeeButton";
 import { CoffeeTagline } from "@/components/CoffeeTagline";
 import { DownloadButton } from "@/components/DownloadModal";
+import { GitHubCorner } from "@/components/GitHubCorner";
 import { ThanksBanner } from "@/components/ThanksBanner";
 import { getDownloadCount } from "@/lib/downloads";
 
@@ -17,6 +18,7 @@ export default async function Page() {
   return (
     <>
       <ThanksBanner />
+      <GitHubCorner />
       <main>
         <section className="hero">
           <div className="container">
@@ -109,6 +111,26 @@ export default async function Page() {
             non-commercial redistribution clause.
           </p>
           <p>Not affiliated with Blizzard, Apple, or CodeWeavers.</p>
+          <p>
+            Open source on{" "}
+            <a
+              className="text-link"
+              href="https://github.com/MichaelLod/D4Mac"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub
+            </a>{" "}
+            ·{" "}
+            <a
+              className="text-link"
+              href="https://github.com/MichaelLod/D4Mac/issues/new/choose"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Report an issue
+            </a>
+          </p>
         </div>
       </footer>
     </>
