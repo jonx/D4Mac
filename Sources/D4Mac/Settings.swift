@@ -5,6 +5,7 @@ struct SettingsView: View {
     @AppStorage("metalHUD") private var metalHUD = false
     @AppStorage("vendorSpoof") private var vendorSpoof = true
     @AppStorage("syncStyle") private var syncStyle: SyncStyle = .msync
+    @State private var showImport = false
 
     enum SyncStyle: String, CaseIterable, Identifiable {
         case msync, esync, none
@@ -28,6 +29,9 @@ struct SettingsView: View {
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
         .padding(20)
+        .sheet(isPresented: $showImport) {
+            ImportInstallView().environmentObject(bottle)
+        }
     }
 
     private var generalTab: some View {
@@ -48,6 +52,13 @@ struct SettingsView: View {
 
     private var advancedTab: some View {
         Form {
+            Section("Diablo IV game data") {
+                LabeledContent("Already downloaded elsewhere?") {
+                    Button("Import existing install…") { showImport = true }
+                }
+                Text("Reuse a Diablo IV download from CrossOver, Porting Kit, Whisky or GPTK instead of re-downloading ~140 GB.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Section("Bottle") {
                 LabeledContent("Location") {
                     Text(bottle.bottleRoot.path)
