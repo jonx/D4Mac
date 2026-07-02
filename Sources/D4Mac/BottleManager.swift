@@ -24,6 +24,7 @@ final class BottleManager: ObservableObject {
         case installingPrereqs          // Microsoft VC++ runtime, etc.
         case runningInstaller           // BNet installer in Wine
         case launchingBattleNet         // Battle.net.exe running
+        case importingGame              // cloning an existing game install into the bottle
 
         var label: String {
             switch self {
@@ -33,6 +34,7 @@ final class BottleManager: ObservableObject {
             case .installingPrereqs:  "Stoking the engine…"
             case .runningInstaller:   "Battle.net's moving in"
             case .launchingBattleNet: "Battle.net is live"
+            case .importingGame:      "Bringing your game files over…"
             }
         }
 
@@ -50,6 +52,8 @@ final class BottleManager: ObservableObject {
                 "Look for the installer window — click through its prompts and D4Mac will take over once it's home."
             case .launchingBattleNet:
                 "Battle.net opened in its own window. Log in there and pick a game to play."
+            case .importingGame:
+                "Cloning the existing install into your bottle. Instant on the same drive; a bit longer if it has to copy across drives."
             }
         }
     }
