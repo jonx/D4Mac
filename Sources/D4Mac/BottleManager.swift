@@ -404,12 +404,21 @@ final class BottleManager: ObservableObject {
 
     /// Poll the Agent log ~every 1.5 s and publish a live progress figure.
     /// Runs concurrently with the installer subprocess; cancelled when it exits.
+    ///
+    /// The file/regex work runs OFF the main actor (detached task) so the UI
+    /// never blocks on disk I/O — only the `installProgress` assignment below
+    /// hops back onto it.
     private func pollInstallProgress() async {
+        let agentDir = bottleRoot.appendingPathComponent(
+            "drive_c/ProgramData/Battle.net/Agent", isDirectory: true)
         var lastBytes: Int64 = 0
         var lastTime = Date()
         var primed = false
         while !Task.isCancelled {
-            if let s = currentAgentStats() {
+            let stats = await Task.detached(priority: .utility) {
+                Self.currentAgentStats(agentDir: agentDir)
+            }.value
+            if let s = stats {
                 let now = Date()
                 let dt = now.timeIntervalSince(lastTime)
                 var speed = 0.0
@@ -431,8 +440,12 @@ final class BottleManager: ObservableObject {
     }
 
     /// Parse the newest Agent log's most recent progress blob.
-    private func currentAgentStats() -> (done: Int64, total: Int64, fraction: Double)? {
-        guard let logURL = newestAgentLog(), let tail = tailString(logURL) else { return nil }
+    /// `nonisolated static`: pure function of the filesystem, safe off-actor.
+    private nonisolated static func currentAgentStats(
+        agentDir: URL
+    ) -> (done: Int64, total: Int64, fraction: Double)? {
+        guard let logURL = newestAgentLog(in: agentDir),
+              let tail = tailString(logURL) else { return nil }
         let doneStr = lastCapture(#""update_bytes_current":\s*\[\s*([0-9]+)"#, tail)
         let totalStr = lastCapture(#""update_bytes_total":\s*\[\s*([0-9]+)"#, tail)
         let fracStr = lastCapture(#""playable_progress":\s*([0-9.]+)"#, tail)
@@ -444,9 +457,7 @@ final class BottleManager: ObservableObject {
     }
 
     /// Newest `Agent-*.log` under the bottle's Battle.net Agent dir, by mtime.
-    private func newestAgentLog() -> URL? {
-        let agentDir = bottleRoot.appendingPathComponent(
-            "drive_c/ProgramData/Battle.net/Agent", isDirectory: true)
+    private nonisolated static func newestAgentLog(in agentDir: URL) -> URL? {
         let fm = FileManager.default
         guard let en = fm.enumerator(
             at: agentDir, includingPropertiesForKeys: [.contentModificationDateKey]) else { return nil }
@@ -463,7 +474,7 @@ final class BottleManager: ObservableObject {
 
     /// Last `maxBytes` of a file as UTF-8 (the log only grows; the tail holds
     /// the freshest progress blob).
-    private func tailString(_ url: URL, maxBytes: UInt64 = 65536) -> String? {
+    private nonisolated static func tailString(_ url: URL, maxBytes: UInt64 = 65536) -> String? {
         guard let fh = try? FileHandle(forReadingFrom: url) else { return nil }
         defer { try? fh.close() }
         let size = (try? fh.seekToEnd()) ?? 0
@@ -473,7 +484,7 @@ final class BottleManager: ObservableObject {
     }
 
     /// First capture group of the LAST regex match (the most recent value).
-    private func lastCapture(_ pattern: String, _ s: String) -> String? {
+    private nonisolated static func lastCapture(_ pattern: String, _ s: String) -> String? {
         guard let re = try? NSRegularExpression(
             pattern: pattern, options: [.dotMatchesLineSeparators]) else { return nil }
         let matches = re.matches(in: s, range: NSRange(s.startIndex..., in: s))

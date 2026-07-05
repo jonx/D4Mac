@@ -74,20 +74,24 @@ X86_OS = ["sequoia", "sonoma", "ventura", "monterey", "big_sur", "catalina"]
 GHCR = "https://ghcr.io/v2/homebrew/core"
 HOMEBREW_PREFIXES = ("@@HOMEBREW", "/opt/homebrew", "/usr/local")
 
+# Every GHCR request gets this; a hung registry connection should fail the
+# build promptly rather than stall it forever.
+HTTP_TIMEOUT = 30
+
 
 def _token(formula):
     url = (
         f"https://ghcr.io/token?service=ghcr.io"
         f"&scope=repository:homebrew/core/{formula}:pull"
     )
-    return json.load(urllib.request.urlopen(url))["token"]
+    return json.load(urllib.request.urlopen(url, timeout=HTTP_TIMEOUT))["token"]
 
 
 def _get(url, tok, accept):
     req = urllib.request.Request(
         url, headers={"Authorization": f"Bearer {tok}", "Accept": accept}
     )
-    return urllib.request.urlopen(req)
+    return urllib.request.urlopen(req, timeout=HTTP_TIMEOUT)
 
 
 def _pick_x86_bottle(formula, tok):
@@ -140,6 +144,23 @@ def fetch_and_extract(formula, cache, extract_root):
         try:
             t.extractall(extract_root, filter="data")  # py3.12+
         except TypeError:
+            # Pre-3.12 has no extraction filters (CVE-2007-4559): reject any
+            # member that would land outside extract_root before extracting.
+            root = os.path.realpath(extract_root)
+            for m in t.getmembers():
+                dest = os.path.realpath(os.path.join(root, m.name))
+                if not dest.startswith(root + os.sep):
+                    raise SystemExit(
+                        f"error: {tgz} contains unsafe path {m.name!r}"
+                    )
+                if m.islnk() or m.issym():
+                    target = os.path.realpath(
+                        os.path.join(os.path.dirname(dest), m.linkname)
+                    )
+                    if not target.startswith(root + os.sep):
+                        raise SystemExit(
+                            f"error: {tgz} link {m.name!r} escapes extract root"
+                        )
             t.extractall(extract_root)
     print(f"  {formula:12} {version}.{os_tag}  ({os.path.getsize(tgz)//1024} KB)")
 
@@ -157,7 +178,9 @@ def real_dylibs(extract_root):
 
 def deps(dylib):
     """Non-system dependency leaf names of a Mach-O dylib."""
-    txt = subprocess.run(["otool", "-L", dylib], capture_output=True, text=True).stdout
+    txt = subprocess.run(
+        ["otool", "-L", dylib], capture_output=True, text=True, check=True
+    ).stdout
     result = []
     for line in txt.splitlines()[1:]:
         path = line.strip().split(" ")[0]
@@ -188,16 +211,19 @@ def rewrite(dylib):
     lib/external. Leaves /usr/lib and /System references alone."""
     leaf = os.path.basename(dylib)
     subprocess.run(
-        ["install_name_tool", "-id", f"@rpath/{leaf}", dylib], capture_output=True
+        ["install_name_tool", "-id", f"@rpath/{leaf}", dylib],
+        capture_output=True, check=True,
     )
-    txt = subprocess.run(["otool", "-L", dylib], capture_output=True, text=True).stdout
+    txt = subprocess.run(
+        ["otool", "-L", dylib], capture_output=True, text=True, check=True
+    ).stdout
     for line in txt.splitlines()[1:]:
         path = line.strip().split(" ")[0]
         if path.startswith(HOMEBREW_PREFIXES):
             base = os.path.basename(path)
             subprocess.run(
                 ["install_name_tool", "-change", path, f"@rpath/{base}", dylib],
-                capture_output=True,
+                capture_output=True, check=True,
             )
 
 
@@ -226,10 +252,14 @@ def main():
         os.chmod(dst, 0o644)
         rewrite(dst)
         arch = subprocess.run(
-            ["file", "-b", dst], capture_output=True, text=True
+            ["file", "-b", dst], capture_output=True, text=True, check=True
         ).stdout
-        tag = "x86_64" if "x86_64" in arch else "??ARCH??"
-        print(f"  {leaf:24} [{tag}]")
+        if "x86_64" not in arch:
+            raise SystemExit(
+                f"error: staged {leaf} is not x86_64 ({arch.strip()}) — "
+                f"the whole point is an x86_64 chain; aborting"
+            )
+        print(f"  {leaf:24} [x86_64]")
 
     shutil.rmtree(cache, ignore_errors=True)
     print(f"\n✓ wine libs staged in {out_dir}")

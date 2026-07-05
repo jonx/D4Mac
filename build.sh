@@ -130,16 +130,25 @@ find "$APP/Contents/SharedSupport/Wine" \
 # registry (no Homebrew required) — see Prereqs/fetch-wine-libs.py.
 WINELIBS_SRC="$SCRIPT_DIR/Prereqs/wine-libs"
 WINELIBS_DST="$APP/Contents/SharedSupport/Wine/lib/external"
-if [ ! -f "$WINELIBS_SRC/libfreetype.6.dylib" ]; then
+# Both seeds must be present — checking just one lets a partial/stale staging
+# dir skip the fetch and ship a broken chain (blank text OR no TLS).
+WINELIBS_SEEDS=("libfreetype.6.dylib" "libgnutls.30.dylib")
+winelibs_complete() {
+  for lib in "${WINELIBS_SEEDS[@]}"; do
+    [ -f "$WINELIBS_SRC/$lib" ] || return 1
+  done
+}
+if ! winelibs_complete; then
   echo "==> fetching x86_64 Wine support libs (one-time, ~8 MB)"
   /usr/bin/python3 "$SCRIPT_DIR/Prereqs/fetch-wine-libs.py"
 fi
-if [ -f "$WINELIBS_SRC/libfreetype.6.dylib" ]; then
+if winelibs_complete; then
   mkdir -p "$WINELIBS_DST"
   cp -p "$WINELIBS_SRC"/*.dylib "$WINELIBS_DST/"
   echo "bundled wine libs ($(ls "$WINELIBS_SRC"/*.dylib | wc -l | tr -d ' ') x86_64 dylibs)"
 else
-  echo "warning: $WINELIBS_SRC missing — FreeType/GnuTLS won't be bundled"
+  echo "error: $WINELIBS_SRC incomplete (need ${WINELIBS_SEEDS[*]}) — FreeType/GnuTLS chain would be broken" >&2
+  exit 1
 fi
 
 # Make sure binaries are executable post-copy.
