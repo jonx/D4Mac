@@ -5,6 +5,7 @@ struct SettingsView: View {
     @AppStorage("metalHUD") private var metalHUD = false
     @AppStorage("vendorSpoof") private var vendorSpoof = true
     @AppStorage("syncStyle") private var syncStyle: SyncStyle = .msync
+    @State private var showMovePicker = false
 
     enum SyncStyle: String, CaseIterable, Identifiable {
         case msync, esync, none
@@ -28,6 +29,21 @@ struct SettingsView: View {
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
         .padding(20)
+        .fileImporter(
+            isPresented: $showMovePicker,
+            allowedContentTypes: [.folder],
+            allowsMultipleSelection: false
+        ) { result in
+            guard case .success(let urls) = result, let dest = urls.first else { return }
+            let alert = NSAlert()
+            alert.messageText = "Move all D4Mac data?"
+            alert.informativeText = "Everything (bottle, installed games, shader cache) moves to \(dest.path)/D4Mac. Battle.net will be closed first. On another drive this copies all data — with games installed it can take a while."
+            alert.addButton(withTitle: "Move")
+            alert.addButton(withTitle: "Cancel")
+            if alert.runModal() == .alertFirstButtonReturn {
+                Task { await bottle.moveSupportDir(to: dest) }
+            }
+        }
     }
 
     private var generalTab: some View {
@@ -50,13 +66,19 @@ struct SettingsView: View {
         Form {
             Section("Bottle") {
                 LabeledContent("Location") {
-                    Text(bottle.bottleRoot.path)
+                    Text(bottle.bottleRoot.resolvingSymlinksInPath().path)
                         .font(.system(.caption, design: .monospaced))
                         .lineLimit(1).truncationMode(.middle)
                 }
                 Button("Reveal in Finder") {
-                    NSWorkspace.shared.open(bottle.bottleRoot)
+                    NSWorkspace.shared.open(bottle.bottleRoot.resolvingSymlinksInPath())
                 }
+                LabeledContent("Need the space elsewhere?") {
+                    Button("Move bottle…") { showMovePicker = true }
+                        .disabled(bottle.isBusy)
+                }
+                Text("Moves all D4Mac data (bottle, games, shader cache) to a folder you pick — e.g. an external SSD — and links it back invisibly. Games keep working; nothing to reinstall.")
+                    .font(.caption).foregroundStyle(.secondary)
                 Button("Reset bottle…", role: .destructive) {
                     let alert = NSAlert()
                     alert.messageText = "Reset bottle?"
