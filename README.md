@@ -7,6 +7,20 @@
 
 ---
 
+> ### ⚙️ This is a community build (jonx fork)
+>
+> Unofficial build maintained at **[github.com/jonx/D4Mac](https://github.com/jonx/D4Mac)**
+> while upstream is quiet — every change is also submitted upstream as a PR. Not
+> affiliated with @MichaelLod; tips still go to him.
+>
+> **Supported**
+> - **Hardware/OS:** Apple Silicon (M1–M4/M5), macOS 14 Sonoma or later.
+> - **Diablo IV:** playable through **patch 3.1.0 (Season 14, June 2026)**. 3.1.0
+>   started importing `FindNextFileNameW`, which stock Wine doesn't export — so the
+>   game won't launch without this build's fix (error 127). This build includes it.
+> - Blizzard can change the client on any patch; if a future D4 patch breaks launch,
+>   [open an issue](https://github.com/jonx/D4Mac/issues) and it'll need a new build.
+
 ## What it is
 
 A native macOS `.app` that wraps a self-contained Wine 11.0 + Apple Game

@@ -63,7 +63,7 @@ struct BeerTipView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "mug.fill")
-                    Text("Buy me a beer")
+                    Text("Buy the author a beer")
                         .fontWeight(.semibold)
                 }
                 .font(.callout)
@@ -82,6 +82,15 @@ struct BeerTipView: View {
                 )
             }
             .buttonStyle(.plain)
+
+            // Community build: the tip goes to D4Mac's original author, not the
+            // fork maintainer. (The button already links MichaelLod's page.)
+            Text("Tips go to D4Mac's creator [@MichaelLod](https://github.com/MichaelLod) — not this build's maintainer.")
+                .font(.caption2)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Color.appCaption)
+                .tint(.bnetBlueLight)
+                .frame(maxWidth: 320)
         }
         .onAppear {
             // Randomise initial pick so two windows opened at the same minute

@@ -146,6 +146,11 @@ struct ContentView: View {
     private var playCard: some View {
         VStack(spacing: 12) {
             Button {
+                // Flip phase synchronously so the button disables and the
+                // status banner appears on the same click — launchBattleNet()'s
+                // first real work is behind an await, which otherwise leaves a
+                // ~5 s "did anything happen?" gap.
+                bottle.phase = .launchingBattleNet
                 Task { await bottle.launchBattleNet() }
             } label: {
                 HStack(spacing: 10) {
@@ -221,12 +226,17 @@ struct ContentView: View {
     // MARK: - Footer
 
     private var footer: some View {
-        HStack {
-            Spacer()
+        VStack(spacing: 3) {
+            Text("Unofficial community build by [@jonx](https://github.com/jonx/D4Mac) — based on [D4Mac](https://github.com/MichaelLod/D4Mac) by @MichaelLod")
+                .font(.caption2)
+                .foregroundStyle(Color.appCaption)
+                .multilineTextAlignment(.center)
+                .tint(.bnetBlueLight)
             Text(versionString)
                 .font(.caption2)
                 .foregroundStyle(Color.appCaption)
         }
+        .frame(maxWidth: .infinity)
     }
 
     private var versionString: String {
