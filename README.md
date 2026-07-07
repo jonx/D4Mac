@@ -32,6 +32,10 @@
 >   (D4Mac only reaches the internet to check for its own updates.)
 > - **You can quit D4Mac once your game is running** — Battle.net and the game run as
 >   independent processes and keep playing after the launcher closes.
+> - **First-play stutter is normal.** Diablo IV compiles Metal shaders the first time you
+>   cross into a new area or trigger a new effect, which causes brief hitches. They fade
+>   as you play — the shader cache builds up and persists across sessions, so revisits and
+>   later sessions are smooth. (Not a bug, and not specific to this build.)
 
 ## What's different in this fork
 
