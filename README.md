@@ -46,7 +46,7 @@ Everything here is also open as an upstream PR — this build just bundles them 
 upstream is between releases:
 
 - **Diablo IV 3.1.0 launch fix** — exports `FindNextFileNameW` so the Season 14 client loads (else: error 127).
-- **Battle.net installs on a clean Apple Silicon Mac** — bundles the x86_64 FreeType/GnuTLS chain, so no Intel Homebrew needed (fixes the blank-window / `BLZBNTBTS…` install failures). *(PR #4, @BastianOrth2)*
+- **Battle.net installs on a clean Apple Silicon Mac** — bundles the x86_64 FreeType/GnuTLS chain, so no Intel Homebrew needed (fixes the blank-window / `BLZBNTBTS…` install failures). *(PR #4)*
 - **Fast downloads + stable gameplay** — Wine sync defaults to `None` and the Settings toggle actually works (fixes the ~4 KB/s throttle and mid-session freezes). *(PR #4)*
 - **Live install progress bar** (%, GB, MB/s). *(PR #4)*
 - **Import an existing Diablo IV install** — reuse a CrossOver/Porting Kit/Whisky/GPTK download instead of re-downloading ~140 GB. *(PR #6)*
@@ -60,6 +60,7 @@ upstream is between releases:
 - **[@MichaelLod](https://github.com/MichaelLod)** — created D4Mac. All the hard parts (the Wine/GPTK stack, the launcher) are his. **Tips go to him**, via the in-app button and [d4mac.com](https://d4mac.com).
 - **[@BastianOrth2](https://github.com/MichaelLod/D4Mac/pull/4)** — the FreeType/GnuTLS bundling, sync-off default, and progress bar (PR #4).
 - **@0ximu** — deep diagnostics in [issue #2](https://github.com/MichaelLod/D4Mac/issues/2) (missing-library cascade, sync deadlocks, launcher-state reset, external-SSD setup).
+- **[@jonx](https://github.com/jonx/D4Mac)** (this fork) — the Diablo IV 3.1.0 fix and PRs #6–#9 (import existing install, external-drive move, reset launcher state, Metal HUD toggle).
 
 This fork is a stopgap and will happily be obsoleted by an official release.
 
