@@ -36,6 +36,9 @@
 >   cross into a new area or trigger a new effect, which causes brief hitches. They fade
 >   as you play — the shader cache builds up and persists across sessions, so revisits and
 >   later sessions are smooth. (Not a bug, and not specific to this build.)
+> - **RAM matters.** Diablo IV wants ~20 GB of unified memory. Verified comfortable on a
+>   **32 GB** Mac; on **16 GB** Macs expect heavy swapping and stutter — set **Texture
+>   Quality to Low/Medium** and close other apps, or it'll struggle.
 
 ## What's different in this fork
 
