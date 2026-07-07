@@ -46,21 +46,21 @@ Everything here is also open as an upstream PR — this build just bundles them 
 upstream is between releases:
 
 - **Diablo IV 3.1.0 launch fix** — exports `FindNextFileNameW` so the Season 14 client loads (else: error 127).
-- **Battle.net installs on a clean Apple Silicon Mac** — bundles the x86_64 FreeType/GnuTLS chain, so no Intel Homebrew needed (fixes the blank-window / `BLZBNTBTS…` install failures). *(PR #4)*
-- **Fast downloads + stable gameplay** — Wine sync defaults to `None` and the Settings toggle actually works (fixes the ~4 KB/s throttle and mid-session freezes). *(PR #4)*
-- **Live install progress bar** (%, GB, MB/s). *(PR #4)*
-- **Import an existing Diablo IV install** — reuse a CrossOver/Porting Kit/Whisky/GPTK download instead of re-downloading ~140 GB. *(PR #6)*
-- **Move bottle to another disk** — put everything on an external SSD, linked back invisibly. *(PR #9)*
-- **Reset launcher state** — one-click fix for Battle.net stuck on "Update — Queued." *(PR #8)*
-- **Metal FPS/HUD toggle.** *(PR #7)*
+- **Battle.net installs on a clean Apple Silicon Mac** — bundles the x86_64 FreeType/GnuTLS chain, so no Intel Homebrew needed (fixes the blank-window / `BLZBNTBTS…` install failures). *(PR [#4](https://github.com/MichaelLod/D4Mac/pull/4))*
+- **Fast downloads + stable gameplay** — Wine sync defaults to `None` and the Settings toggle actually works (fixes the ~4 KB/s throttle and mid-session freezes). *(PR [#4](https://github.com/MichaelLod/D4Mac/pull/4))*
+- **Live install progress bar** (%, GB, MB/s). *(PR [#4](https://github.com/MichaelLod/D4Mac/pull/4))*
+- **Import an existing Diablo IV install** — reuse a CrossOver/Porting Kit/Whisky/GPTK download instead of re-downloading ~140 GB. *(PR [#6](https://github.com/MichaelLod/D4Mac/pull/6))*
+- **Move bottle to another disk** — put everything on an external SSD, linked back invisibly. *(PR [#9](https://github.com/MichaelLod/D4Mac/pull/9))*
+- **Reset launcher state** — one-click fix for Battle.net stuck on "Update — Queued." *(PR [#8](https://github.com/MichaelLod/D4Mac/pull/8))*
+- **Metal FPS/HUD toggle.** *(PR [#7](https://github.com/MichaelLod/D4Mac/pull/7))*
 - **Signed + notarized** — clean double-click install (no right-click bypass).
 
 ## Credits & respect
 
 - **[@MichaelLod](https://github.com/MichaelLod)** — created D4Mac. All the hard parts (the Wine/GPTK stack, the launcher) are his. **Tips go to him**, via the in-app button and [d4mac.com](https://d4mac.com).
-- **[@BastianOrth2](https://github.com/MichaelLod/D4Mac/pull/4)** — the FreeType/GnuTLS bundling, sync-off default, and progress bar (PR #4).
+- **[@BastianOrth2](https://github.com/MichaelLod/D4Mac/pull/4)** — the FreeType/GnuTLS bundling, sync-off default, and progress bar (PR [#4](https://github.com/MichaelLod/D4Mac/pull/4)).
 - **@0ximu** — deep diagnostics in [issue #2](https://github.com/MichaelLod/D4Mac/issues/2) (missing-library cascade, sync deadlocks, launcher-state reset, external-SSD setup).
-- **[@jonx](https://github.com/jonx/D4Mac)** (this fork) — the Diablo IV 3.1.0 fix and PRs #6–#9 (import existing install, external-drive move, reset launcher state, Metal HUD toggle).
+- **[@jonx](https://github.com/jonx/D4Mac)** (this fork) — the Diablo IV 3.1.0 fix, plus [#6](https://github.com/MichaelLod/D4Mac/pull/6) (import existing install), [#7](https://github.com/MichaelLod/D4Mac/pull/7) (Metal HUD), [#8](https://github.com/MichaelLod/D4Mac/pull/8) (reset launcher state) and [#9](https://github.com/MichaelLod/D4Mac/pull/9) (external-drive move).
 
 This fork is a stopgap and will happily be obsoleted by an official release.
 
