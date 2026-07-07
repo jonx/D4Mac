@@ -129,6 +129,10 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("D4Mac is a free, non-commercial Battle.net launcher for Apple Silicon, built on Wine 11.0 and Apple's Game Porting Toolkit 3.0.")
                 .font(.callout)
+            Text("Created by [@MichaelLod](https://github.com/MichaelLod/D4Mac). This unofficial community build is maintained by [@jonx](https://github.com/jonx/D4Mac) while upstream is quiet — every change is submitted back upstream. Tips (the “Buy a beer” button) go to @MichaelLod, the original author.")
+                .font(.callout)
+                .foregroundStyle(Color.appSubhead)
+                .tint(.bnetBlueLight)
             Divider()
             Text("Bundled software credits & licenses")
                 .font(.headline)
