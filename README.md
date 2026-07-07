@@ -15,9 +15,11 @@
 >
 > **Supported**
 > - **Hardware/OS:** Apple Silicon (M1–M4/M5), macOS 14 Sonoma or later.
-> - **Diablo IV:** playable through **patch 3.1.0 (Season 14, June 2026)**. 3.1.0
->   started importing `FindNextFileNameW`, which stock Wine doesn't export — so the
->   game won't launch without this build's fix (error 127). This build includes it.
+> - **Diablo IV:** ✅ **confirmed working on the current patch — 3.1.0** (verified
+>   end-to-end on `3.1.0.72698`, Season 14, 2026-07). 3.1.0 started importing
+>   `FindNextFileNameW`, which stock Wine doesn't export, so the game aborts at
+>   launch with **error 127** on other builds — this one adds the export, so it
+>   launches to the menu and plays.
 > - Blizzard can change the client on any patch; if a future D4 patch breaks launch,
 >   [open an issue](https://github.com/jonx/D4Mac/issues) and it'll need a new build.
 >
@@ -71,7 +73,7 @@ for the full breakdown.
 | Game / app                  | Status                                                                                      |
 | --------------------------- | ------------------------------------------------------------------------------------------- |
 | Battle.net                  | ✓ launches, login + chat work, keyboard works                                               |
-| Diablo IV                   | ✓ playable end-to-end (verified 2026-05)                                                    |
+| Diablo IV                   | ✓ playable end-to-end · **patch 3.1.0 confirmed working (3.1.0.72698, 2026-07)**             |
 | First-launch shader compile | ⚠ ~50 % of the time it hangs once on the Metal pipeline race; second launch always works    |
 | Other Blizzard titles       | not tested — try and [open an issue](https://github.com/MichaelLod/D4Mac/issues/new/choose) |
 
