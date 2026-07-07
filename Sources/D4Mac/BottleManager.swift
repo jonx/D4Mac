@@ -53,7 +53,7 @@ final class BottleManager: ObservableObject {
             case .runningInstaller:
                 "Look for the installer window — click through its prompts and D4Mac will take over once it's home."
             case .launchingBattleNet:
-                "Battle.net opened in its own window — it may be hidden behind this one. Click it or press ⌘-Tab to switch to it, then log in and pick a game."
+                "Battle.net opened in its own window — it may be behind this one (click it or press ⌘-Tab). Log in and pick a game. Once it's running you can quit D4Mac — Battle.net and the game keep playing."
             case .importingGame:
                 "Cloning the existing install into your bottle. Instant on the same drive; a bit longer if it has to copy across drives."
             case .movingBottle:

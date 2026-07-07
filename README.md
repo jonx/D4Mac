@@ -20,6 +20,37 @@
 >   game won't launch without this build's fix (error 127). This build includes it.
 > - Blizzard can change the client on any patch; if a future D4 patch breaks launch,
 >   [open an issue](https://github.com/jonx/D4Mac/issues) and it'll need a new build.
+>
+> **Good to know**
+> - **D4Mac doesn't need network access.** It makes no game-server connections and
+>   doesn't need the *"find devices on local network"* permission — that prompt comes
+>   from **Battle.net** (its LAN peer-download feature) and is safe to **Deny**.
+>   (D4Mac only reaches the internet to check for its own updates.)
+> - **You can quit D4Mac once your game is running** — Battle.net and the game run as
+>   independent processes and keep playing after the launcher closes.
+
+## What's different in this fork
+
+Everything here is also open as an upstream PR — this build just bundles them while
+upstream is between releases:
+
+- **Diablo IV 3.1.0 launch fix** — exports `FindNextFileNameW` so the Season 14 client loads (else: error 127).
+- **Battle.net installs on a clean Apple Silicon Mac** — bundles the x86_64 FreeType/GnuTLS chain, so no Intel Homebrew needed (fixes the blank-window / `BLZBNTBTS…` install failures). *(PR #4, @BastianOrth2)*
+- **Fast downloads + stable gameplay** — Wine sync defaults to `None` and the Settings toggle actually works (fixes the ~4 KB/s throttle and mid-session freezes). *(PR #4)*
+- **Live install progress bar** (%, GB, MB/s). *(PR #4)*
+- **Import an existing Diablo IV install** — reuse a CrossOver/Porting Kit/Whisky/GPTK download instead of re-downloading ~140 GB. *(PR #6)*
+- **Move bottle to another disk** — put everything on an external SSD, linked back invisibly. *(PR #9)*
+- **Reset launcher state** — one-click fix for Battle.net stuck on "Update — Queued." *(PR #8)*
+- **Metal FPS/HUD toggle.** *(PR #7)*
+- **Signed + notarized** — clean double-click install (no right-click bypass).
+
+## Credits & respect
+
+- **[@MichaelLod](https://github.com/MichaelLod)** — created D4Mac. All the hard parts (the Wine/GPTK stack, the launcher) are his. **Tips go to him**, via the in-app button and [d4mac.com](https://d4mac.com).
+- **[@BastianOrth2](https://github.com/MichaelLod/D4Mac/pull/4)** — the FreeType/GnuTLS bundling, sync-off default, and progress bar (PR #4).
+- **@0ximu** — deep diagnostics in [issue #2](https://github.com/MichaelLod/D4Mac/issues/2) (missing-library cascade, sync deadlocks, launcher-state reset, external-SSD setup).
+
+This fork is a stopgap and will happily be obsoleted by an official release.
 
 ## What it is
 
