@@ -34,7 +34,7 @@ final class BottleManager: ObservableObject {
             case .installingFonts:    "Teaching it to speak Windows…"
             case .installingPrereqs:  "Stoking the engine…"
             case .runningInstaller:   "Battle.net's moving in"
-            case .launchingBattleNet: "Battle.net is live"
+            case .launchingBattleNet: "Starting Battle.net…"
             case .importingGame:      "Bringing your game files over…"
             case .movingBottle:       "Relocating your bottle…"
             }
@@ -53,7 +53,7 @@ final class BottleManager: ObservableObject {
             case .runningInstaller:
                 "Look for the installer window — click through its prompts and D4Mac will take over once it's home."
             case .launchingBattleNet:
-                "Battle.net opened in its own window — it may be behind this one (click it or press ⌘-Tab). Log in and pick a game. Once it's running you can quit D4Mac — Battle.net and the game keep playing."
+                "This can take up to ~20 seconds to appear. It opens in its own window — likely behind this one (click it or press ⌘-Tab). Log in and pick a game. Once it's running you can quit D4Mac — Battle.net and the game keep playing."
             case .importingGame:
                 "Cloning the existing install into your bottle. Instant on the same drive; a bit longer if it has to copy across drives."
             case .movingBottle:

@@ -63,7 +63,7 @@ struct BeerTipView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "mug.fill")
-                    Text("Buy the author a beer")
+                    Text("Buy @MichaelLod a beer")
                         .fontWeight(.semibold)
                 }
                 .font(.callout)

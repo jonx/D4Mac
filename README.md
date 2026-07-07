@@ -22,6 +22,8 @@
 >   [open an issue](https://github.com/jonx/D4Mac/issues) and it'll need a new build.
 >
 > **Good to know**
+> - **Logging in works** — an emailed verification code, a **browser passkey**, or the
+>   **Battle.net mobile app** push notification all work for signing in.
 > - **D4Mac doesn't need network access.** It makes no game-server connections and
 >   doesn't need the *"find devices on local network"* permission — that prompt comes
 >   from **Battle.net** (its LAN peer-download feature) and is safe to **Deny**.
